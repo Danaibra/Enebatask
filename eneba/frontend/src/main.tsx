@@ -174,12 +174,13 @@ function Product() {
 
 // ---------- Cart ----------
 function CartPage() {
-  const r = useApi('/cart'); const nav = useNavigate(); const { refresh, user } = useC()
+  const r = useApi('/cart'); const nav = useNavigate(); const { refresh, user, setAuth } = useC()
   const [em, setEm] = useState(''); const [ee, setEe] = useState(''); const [pr, setPr] = useState(false); const [code, setCode] = useState(''); const [ce, setCe] = useState('')
   useEffect(() => { if (r.d) setEm(x => x || r.d.email || user?.email || '') }, [r.d, user])
   const rm = (id: string) => api('/cart/items/' + encodeURIComponent(id), { method: 'DELETE' }).then(() => { r.reload(); refresh() })
   const promo = () => api('/cart/promo', { method: 'POST', body: { code } }).then(() => { setCe(''); r.reload() }, e => setCe(e.message))
-  const go = () => api('/cart/email', { method: 'PUT', body: { email: em } }).then(() => nav('/checkout/payment'), e => setEe(e.message))
+  const go = () => { if (!localStorage.tok) { setEe('Please sign in to continue to payment.'); setAuth('in'); return }
+    api('/cart/email', { method: 'PUT', body: { email: em } }).then(() => nav('/checkout/payment'), e => setEe(e.message)) }
   return <main className="wrap"><Async r={r} err="Unable to load your cart" skel={<div className="skel" style={{ height: 300, marginTop: 28 }} />}>{(c: any) => c.count === 0 ?
     <div className="empty"><h2>Your cart is empty</h2><p>Find your next game and add it to the cart.</p><Link className="btn pu" to="/catalog">Explore Games</Link></div> :
     <div className="ck"><div><h2 style={{ marginBottom: 12 }}>My cart - {c.count} item{c.count > 1 ? 's' : ''}</h2>
@@ -199,7 +200,8 @@ function CartPage() {
 
 // ---------- Payment (simulated: card ending 0002 is declined) ----------
 function Pay() {
-  const nav = useNavigate(); const { refresh } = useC(); const [m, setM] = useState(''); const r = useApi('/cart?method=' + m)
+  const nav = useNavigate(); const { refresh, setAuth } = useC(); const [m, setM] = useState('')
+  useEffect(() => { if (!localStorage.tok) { setAuth('in'); nav('/checkout/cart', { replace: true }) } }, []); const r = useApi('/cart?method=' + m)
   const [card, setCard] = useState({ n: '4242 4242 4242 4242', e: '12/30', c: '123' }); const [err, setErr] = useState(''); const [proc, setProc] = useState(false)
   const qty = (id: string, q: number) => api('/cart/items/' + encodeURIComponent(id), { method: 'PATCH', body: { qty: q } }).then(r.reload)
   const pay = async () => { if (!m) return setErr('Please select a payment method to continue.'); setErr(''); setProc(true)
