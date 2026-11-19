@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: eneba-marketplace
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/layout
