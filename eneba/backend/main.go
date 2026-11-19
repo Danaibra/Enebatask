@@ -481,6 +481,10 @@ func main() {
 	mux.HandleFunc("POST /api/checkout", h(func(w http.ResponseWriter, r *http.Request) {
 		b := body(r)
 		c, u, m := getCart(r), user(r), s(b, "method")
+		if u == nil {
+			er(w, 401, "Please sign in to complete your purchase.")
+			return
+		}
 		v := view(c, m, u)
 		if v["count"].(int) == 0 {
 			er(w, 400, "Your cart is empty")
